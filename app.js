@@ -511,4 +511,142 @@ function initUI() {
     startCamera();
 }
 
-window.addEventListener('load', initUI);
+// ------------------------------
+// UI Initialization (with image testing)
+// ------------------------------
+function initUI() {
+    video = document.getElementById('video');
+    canvas = document.getElementById('landmark-canvas');
+    ctx = canvas.getContext('2d');
+    overlayDiv = document.getElementById('meme-overlay');
+    memeImg = document.getElementById('meme-image');
+    captionDiv = document.getElementById('meme-caption');
+    statusText = document.getElementById('status-text');
+    statusDot = document.querySelector('.status-dot');
+    controlPanel = document.getElementById('controlPanel');
+    togglePanelBtn = document.getElementById('togglePanelBtn');
+    startBtn = document.getElementById('startBtn');
+    debugToggleBtn = document.getElementById('debugToggleBtn');
+    debugOverlay = document.getElementById('debugOverlay');
+    debugContent = document.getElementById('debugContent');
+    
+    mouthSlider = document.getElementById('mouthSlider');
+    smileSlider = document.getElementById('smileSlider');
+    touchSlider = document.getElementById('touchSlider');
+    mouthVal = document.getElementById('mouthVal');
+    smileVal = document.getElementById('smileVal');
+    touchVal = document.getElementById('touchVal');
+    
+    // Populate gesture cards
+    for (let i=1; i<=5; i++) {
+        gestureCards[i] = document.querySelector(`.gesture-card[data-gesture="${i}"]`);
+    }
+    
+    // Sliders
+    mouthSlider.addEventListener('input', () => {
+        CONFIG.MOUTH_OPEN_THRESH = parseFloat(mouthSlider.value);
+        mouthVal.textContent = CONFIG.MOUTH_OPEN_THRESH.toFixed(3);
+    });
+    smileSlider.addEventListener('input', () => {
+        CONFIG.SMILE_THRESH = parseFloat(smileSlider.value);
+        smileVal.textContent = CONFIG.SMILE_THRESH.toFixed(3);
+    });
+    touchSlider.addEventListener('input', () => {
+        CONFIG.TOUCH_DIST_THRESH = parseFloat(touchSlider.value);
+        touchVal.textContent = CONFIG.TOUCH_DIST_THRESH.toFixed(3);
+    });
+    
+    // Buttons
+    startBtn.addEventListener('click', startCamera);
+    debugToggleBtn.addEventListener('click', () => {
+        debugEnabled = !debugEnabled;
+        debugOverlay.classList.toggle('hidden', !debugEnabled);
+        debugToggleBtn.innerHTML = debugEnabled ? 
+            '<span class="btn-icon">🔍</span> Hide Debug Info' : 
+            '<span class="btn-icon">🔍</span> Show Debug Info';
+    });
+    togglePanelBtn.addEventListener('click', () => {
+        controlPanel.classList.toggle('collapsed');
+    });
+    
+    // ============ ADD TEST MODE FOR MEMES ============
+    // Make gesture cards clickable to test memes
+    for (let i=1; i<=5; i++) {
+        const card = gestureCards[i];
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', () => {
+            testMeme(i);
+        });
+    }
+    
+    // Test function to force display a meme
+    window.testMeme = function(id) {
+        console.log(`Testing meme ${id}: ${MEME_PATHS[id]}`);
+        currentMemeId = id;
+        overlayDiv.classList.remove('hidden');
+        memeImg.src = MEME_PATHS[id];
+        captionDiv.textContent = `TEST: Meme ${id}`;
+        statusText.textContent = `Testing Meme ${id}`;
+        
+        // Check if image loads
+        memeImg.onload = () => {
+            console.log(`✅ Meme ${id} loaded successfully`);
+            captionDiv.textContent = `Meme ${id} (Loaded OK)`;
+        };
+        memeImg.onerror = () => {
+            console.error(`❌ Failed to load meme ${id}: ${MEME_PATHS[id]}`);
+            captionDiv.textContent = `ERROR: ${MEME_PATHS[id]} not found`;
+            // Show placeholder text on overlay
+            memeImg.alt = `Missing: ${MEME_PATHS[id]}`;
+        };
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            if (currentMemeId === id) {
+                currentMemeId = null;
+                overlayDiv.classList.add('hidden');
+                statusText.textContent = 'Ready';
+            }
+        }, 3000);
+    };
+    
+    // Add test button to panel
+    const testBtn = document.createElement('button');
+    testBtn.className = 'secondary-btn';
+    testBtn.innerHTML = '<span class="btn-icon">🖼️</span> Test All Memes';
+    testBtn.style.marginTop = '12px';
+    testBtn.addEventListener('click', () => {
+        console.log('Testing all memes sequentially...');
+        let id = 1;
+        const interval = setInterval(() => {
+            window.testMeme(id);
+            id++;
+            if (id > 5) clearInterval(interval);
+        }, 3500);
+    });
+    document.querySelector('.panel-content').appendChild(testBtn);
+    
+    // ============ END TEST MODE ============
+    
+    // Preload images with detailed error logging
+    console.log('Preloading meme images...');
+    for (let id in MEME_PATHS) {
+        const img = new Image();
+        img.onload = () => console.log(`✅ Preloaded meme ${id}: ${MEME_PATHS[id]}`);
+        img.onerror = () => {
+            console.error(`❌ FAILED to preload meme ${id}: ${MEME_PATHS[id]}`);
+            console.error(`   Make sure the file exists at: ${window.location.origin}/${MEME_PATHS[id]}`);
+            // Update the card to show error
+            const card = gestureCards[id];
+            if (card) {
+                const statusSpan = card.querySelector('.gesture-status');
+                statusSpan.textContent = 'IMG MISSING';
+                statusSpan.style.color = '#e74c3c';
+            }
+        };
+        img.src = MEME_PATHS[id];
+    }
+    
+    // Auto-start camera
+    startCamera();
+}
