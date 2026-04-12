@@ -418,3 +418,10 @@ canvas {
 .gesture-card:hover {
     background: rgba(60, 60, 60, 0.8) !important;
 }
+/* FORCE VIDEO VISIBILITY - ADD THIS AT THE BOTTOM */
+video {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 1 !important;
+}
