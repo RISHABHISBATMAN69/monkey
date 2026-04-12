@@ -487,20 +487,7 @@ function forceShowCamera() {
     statusText.textContent = 'Camera visible';
 }
 
-// ------------------------------
-// UI Initialization
-// ------------------------------
 function initUI() {
-    // Add emergency reset button
-const resetBtn = document.createElement('button');
-resetBtn.className = 'secondary-btn';
-resetBtn.innerHTML = '<span class="btn-icon">🔄</span> Reset Camera';
-resetBtn.style.marginTop = '8px';
-resetBtn.addEventListener('click', () => {
-    console.log('Manual camera reset');
-    startCamera();
-});
-panelContent.appendChild(resetBtn);
     video = document.getElementById('video');
     canvas = document.getElementById('landmark-canvas');
     ctx = canvas.getContext('2d');
@@ -522,6 +509,9 @@ panelContent.appendChild(resetBtn);
     mouthVal = document.getElementById('mouthVal');
     smileVal = document.getElementById('smileVal');
     touchVal = document.getElementById('touchVal');
+    
+    // ✅ Define panelContent here before using it
+    const panelContent = document.querySelector('.panel-content');
     
     // Set initial slider values
     mouthSlider.value = CONFIG.MOUTH_OPEN_THRESH;
@@ -563,14 +553,24 @@ panelContent.appendChild(resetBtn);
         controlPanel.classList.toggle('collapsed');
     });
     
-    // Add "Force Show Camera" button to panel
-    const panelContent = document.querySelector('.panel-content');
+    // ✅ Add "Force Show Camera" button
     const forceShowBtn = document.createElement('button');
     forceShowBtn.className = 'secondary-btn';
     forceShowBtn.innerHTML = '<span class="btn-icon">👁️</span> Force Show Camera';
     forceShowBtn.style.marginTop = '8px';
     forceShowBtn.addEventListener('click', forceShowCamera);
     panelContent.appendChild(forceShowBtn);
+    
+    // ✅ Add "Reset Camera" button
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'secondary-btn';
+    resetBtn.innerHTML = '<span class="btn-icon">🔄</span> Reset Camera';
+    resetBtn.style.marginTop = '8px';
+    resetBtn.addEventListener('click', () => {
+        console.log('Manual camera reset');
+        startCamera();
+    });
+    panelContent.appendChild(resetBtn);
     
     // Preload images
     console.log('Preloading meme images...');
