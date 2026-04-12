@@ -418,10 +418,19 @@ canvas {
 .gesture-card:hover {
     background: rgba(60, 60, 60, 0.8) !important;
 }
-/* FORCE VIDEO VISIBILITY - ADD THIS AT THE BOTTOM */
+/* Force video visibility – do not hide */
 video {
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
     z-index: 1 !important;
+}
+
+canvas {
+    z-index: 2 !important;
+}
+
+/* Ensure meme overlay doesn't cover video when hidden */
+.meme-overlay.hidden {
+    display: none !important;
 }
