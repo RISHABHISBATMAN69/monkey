@@ -411,3 +411,10 @@ canvas {
         width: 100%;
     }
 }
+/* Add to existing style.css */
+.gesture-card {
+    cursor: pointer !important;
+}
+.gesture-card:hover {
+    background: rgba(60, 60, 60, 0.8) !important;
+}
