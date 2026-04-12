@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gesture Meme Overlay · Browser</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Video feed (hidden when overlay active) -->
+        <video id="video" autoplay playsinline></video>
+        <!-- Canvas for drawing landmarks -->
+        <canvas id="landmark-canvas"></canvas>
+        <!-- Meme overlay panel (hidden by default) -->
+        <div id="meme-overlay" class="overlay hidden">
+            <img id="meme-image" src="" alt="Meme">
+            <div id="meme-caption"></div>
+        </div>
+        <!-- Minimal status text -->
+        <div id="status">Ready</div>
+    </div>
+
+    <!-- MediaPipe libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.11/vision_bundle.js"></script>
+    <!-- Main app logic -->
+    <script src="app.js"></script>
+</body>
+</html>
