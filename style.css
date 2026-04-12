@@ -1,3 +1,18 @@
+:root {
+    --bg-dark: #0f0f0f;
+    --panel-bg: rgba(20, 20, 20, 0.85);
+    --card-bg: rgba(40, 40, 40, 0.7);
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --accent: #4a9eff;
+    --accent-dim: #2a6fc9;
+    --success: #2ecc71;
+    --warning: #f1c40f;
+    --border-light: rgba(255,255,255,0.08);
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -5,23 +20,35 @@
 }
 
 body {
-    background: #1a1a1a;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
     min-height: 100vh;
-    font-family: 'Helvetica', 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    -webkit-font-smoothing: antialiased;
 }
 
-.container {
-    position: relative;
+.app-container {
+    display: flex;
+    gap: 20px;
+    max-width: 1400px;
     width: 100%;
-    max-width: 960px;
-    aspect-ratio: 4 / 3;
+    height: 85vh;
+    min-height: 600px;
+}
+
+/* Camera Container */
+.camera-container {
+    flex: 1;
+    position: relative;
     background: #000;
-    border-radius: 0;
+    border-radius: 24px;
     overflow: hidden;
-    box-shadow: 0 0 30px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-light);
 }
 
 video, canvas {
@@ -38,145 +65,349 @@ canvas {
     pointer-events: none;
 }
 
-/* Meme overlay */
-.overlay {
+/* Meme Overlay */
+.meme-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #2d2d2d;
     z-index: 10;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    transition: opacity 0.2s ease;
     opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
-.overlay.hidden {
+.meme-overlay.hidden {
     opacity: 0;
     pointer-events: none;
+}
+
+.meme-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #1e1e1e;
+    z-index: -1;
 }
 
 #meme-image {
     max-width: 80%;
     max-height: 70%;
     object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    animation: fadeScale 0.3s ease;
 }
 
-#meme-caption {
-    margin-top: 20px;
-    color: #e0e0e0;
-    font-size: 1.1rem;
-    font-weight: 300;
+.meme-caption {
+    margin-top: 24px;
+    font-size: 1.2rem;
+    font-weight: 400;
     letter-spacing: 0.5px;
-}
-
-/* Status text */
-#status {
-    position: absolute;
-    bottom: 16px;
-    left: 20px;
-    color: #cccccc;
-    font-size: 0.85rem;
-    font-weight: 300;
-    z-index: 5;
-    background: rgba(20,20,20,0.5);
-    padding: 4px 12px;
-    border-radius: 20px;
-    backdrop-filter: blur(2px);
-    pointer-events: none;
-}
-
-/* Controls */
-#controls {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    z-index: 20;
-    display: flex;
-    gap: 8px;
-}
-
-.ctrl-btn {
-    background: rgba(30,30,30,0.7);
-    backdrop-filter: blur(4px);
-    border: 0.5px solid rgba(255,255,255,0.2);
-    color: #e0e0e0;
-    font-family: 'Helvetica', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 300;
-    padding: 6px 12px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background 0.2s;
-    letter-spacing: 0.3px;
-}
-
-.ctrl-btn:hover {
-    background: rgba(60,60,60,0.8);
-}
-
-.ctrl-btn.active {
-    background: rgba(80,80,80,0.9);
-    color: white;
-}
-
-/* Debug panel */
-#debug-panel {
-    position: absolute;
-    top: 70px;
-    right: 16px;
-    background: rgba(20,20,20,0.8);
+    color: rgba(255,255,255,0.9);
+    background: rgba(0,0,0,0.3);
+    padding: 8px 24px;
+    border-radius: 40px;
     backdrop-filter: blur(8px);
-    color: #ddd;
+}
+
+@keyframes fadeScale {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Status Indicator */
+.status-indicator {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(20,20,20,0.6);
+    backdrop-filter: blur(8px);
+    padding: 6px 16px;
+    border-radius: 40px;
+    border: 0.5px solid var(--border-light);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e74c3c;
+    transition: background 0.2s;
+}
+
+.status-dot.active {
+    background: var(--success);
+    box-shadow: 0 0 10px var(--success);
+}
+
+#status-text {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+/* Control Panel */
+.control-panel {
+    width: 360px;
+    background: var(--panel-bg);
+    backdrop-filter: blur(16px);
+    border-radius: 24px;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.panel-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-header h2 {
+    font-weight: 500;
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.icon-btn:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+}
+
+.panel-content {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Buttons */
+.primary-btn, .secondary-btn {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 14px;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 24px;
+}
+
+.primary-btn {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 12px rgba(74, 158, 255, 0.2);
+}
+
+.primary-btn:hover {
+    background: var(--accent-dim);
+    transform: translateY(-1px);
+}
+
+.secondary-btn {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+    border: 0.5px solid var(--border-light);
+}
+
+.secondary-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.btn-icon {
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+/* Gesture Grid */
+.gesture-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.gesture-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 16px;
+    border: 0.5px solid var(--border-light);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.gesture-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-dim);
+}
+
+.gesture-icon {
+    font-size: 1.8rem;
+    margin-right: 12px;
+}
+
+.gesture-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.gesture-name {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.gesture-status {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: rgba(0,0,0,0.2);
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.progress-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.progress-bar::after {
+    content: '';
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.1s linear;
+    border-radius: 3px;
+}
+
+.gesture-card[data-gesture="1"].active .progress-bar::after { width: 100%; }
+.gesture-card[data-gesture="2"].active .progress-bar::after { width: 100%; }
+.gesture-card[data-gesture="3"].active .progress-bar::after { width: 100%; }
+.gesture-card[data-gesture="4"].active .progress-bar::after { width: 100%; }
+.gesture-card[data-gesture="5"].active .progress-bar::after { width: 100%; }
+
+/* Settings Section */
+.settings-section {
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 16px;
+}
+
+.settings-section summary {
+    font-weight: 500;
+    margin-bottom: 16px;
+    cursor: pointer;
+    user-select: none;
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.settings-section summary:hover {
+    color: var(--text-primary);
+}
+
+.slider-group {
+    margin-bottom: 16px;
+}
+
+.slider-group label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.slider-group input {
+    width: 100%;
+    accent-color: var(--accent);
+    background: transparent;
+}
+
+/* Debug Overlay */
+.debug-overlay {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(8px);
+    color: #0f0;
     padding: 16px;
     border-radius: 12px;
-    width: 240px;
-    z-index: 25;
-    border: 0.5px solid rgba(255,255,255,0.15);
+    font-family: 'SF Mono', monospace;
     font-size: 0.8rem;
-    transition: opacity 0.2s;
+    max-width: 400px;
+    max-height: 300px;
+    overflow: auto;
+    z-index: 100;
+    border: 1px solid #333;
 }
 
-#debug-panel.hidden {
+.debug-overlay.hidden {
     display: none;
 }
 
-#debug-panel h4 {
-    font-weight: 400;
-    margin-bottom: 8px;
-    color: #fff;
-    letter-spacing: 0.5px;
+/* Collapsed panel state */
+.control-panel.collapsed {
+    width: 60px;
 }
 
-#gesture-status {
-    margin-bottom: 16px;
-    line-height: 1.6;
+.control-panel.collapsed .panel-content,
+.control-panel.collapsed .panel-header h2 {
+    display: none;
 }
 
-.slider-container {
-    margin-bottom: 12px;
+.control-panel.collapsed .panel-header {
+    justify-content: center;
+    padding: 20px 0;
 }
 
-.slider-container label {
-    display: flex;
-    justify-content: space-between;
-}
-
-.slider-container input {
-    width: 100%;
-    margin-top: 4px;
-    background: transparent;
-    accent-color: #aaa;
-}
-
-/* Hide video when meme active */
-.container.meme-active video {
-    opacity: 0;
-}
-.container.meme-active canvas {
-    opacity: 0;
+/* Responsive */
+@media (max-width: 800px) {
+    .app-container {
+        flex-direction: column;
+        height: auto;
+    }
+    .control-panel {
+        width: 100%;
+    }
 }
