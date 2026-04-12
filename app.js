@@ -510,8 +510,7 @@ function initUI() {
     // Auto-start camera
     startCamera();
 }
-
-// ------------------------------
+window.addEventListener('load', initUI);// ------------------------------
 // UI Initialization (with image testing)
 // ------------------------------
 function initUI() {
