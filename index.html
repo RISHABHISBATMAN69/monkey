@@ -2,28 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Gesture Meme Overlay · Browser</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Video feed (hidden when overlay active) -->
-        <video id="video" autoplay playsinline></video>
-        <!-- Canvas for drawing landmarks -->
+    <div class="container" id="container">
+        <!-- Video feed -->
+        <video id="video" autoplay playsinline muted></video>
+        <!-- Canvas for landmarks -->
         <canvas id="landmark-canvas"></canvas>
-        <!-- Meme overlay panel (hidden by default) -->
+        
+        <!-- Meme overlay (hidden by default) -->
         <div id="meme-overlay" class="overlay hidden">
             <img id="meme-image" src="" alt="Meme">
             <div id="meme-caption"></div>
         </div>
-        <!-- Minimal status text -->
-        <div id="status">Ready</div>
+        
+        <!-- Status bar (bottom) -->
+        <div id="status">Press Start</div>
+        
+        <!-- Control panel (minimal, top-right) -->
+        <div id="controls">
+            <button id="start-btn" class="ctrl-btn">Start Camera</button>
+            <button id="debug-btn" class="ctrl-btn debug-off">Show Debug</button>
+        </div>
+        
+        <!-- Debug panel (collapsible) -->
+        <div id="debug-panel" class="hidden">
+            <h4>Gesture Detection</h4>
+            <div id="gesture-status"></div>
+            <h4>Sensitivity</h4>
+            <div class="slider-container">
+                <label>Mouth Open <span id="mouth-val">0.04</span></label>
+                <input type="range" id="mouth-slider" min="0.01" max="0.10" step="0.005" value="0.04">
+            </div>
+            <div class="slider-container">
+                <label>Smile Stretch <span id="smile-val">0.28</span></label>
+                <input type="range" id="smile-slider" min="0.15" max="0.40" step="0.01" value="0.28">
+            </div>
+            <div class="slider-container">
+                <label>Touch Distance <span id="touch-val">0.08</span></label>
+                <input type="range" id="touch-slider" min="0.03" max="0.15" step="0.005" value="0.08">
+            </div>
+        </div>
     </div>
 
-    <!-- MediaPipe libraries -->
+    <!-- MediaPipe -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.11/vision_bundle.js"></script>
-    <!-- Main app logic -->
+    <!-- App -->
     <script src="app.js"></script>
 </body>
 </html>
