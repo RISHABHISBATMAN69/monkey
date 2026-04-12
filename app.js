@@ -1,11 +1,11 @@
 // ------------------------------
-// Configuration (Sensitive - Easy Trigger)
+// Configuration (Instant Trigger)
 // ------------------------------
 const CONFIG = {
     LANDMARK_COLOR: '#ffffff',
-    LINE_WIDTH: 1.5,
-    DOT_RADIUS: 2.0,
-    ACTIVATION_FRAMES: 2,
+    LINE_WIDTH: 1.2,
+    DOT_RADIUS: 1.5,
+    ACTIVATION_FRAMES: 1,          // Instant trigger as soon as conditions met
     TRIGGER_COOLDOWN: 1500,
     MOUTH_OPEN_THRESH: 0.025,
     SMILE_THRESH: 0.20,
@@ -24,7 +24,9 @@ const MEME_PATHS = {
     5: './image_745cee.png'
 };
 
-// Global state
+// ------------------------------
+// Global UI Variables (all declared upfront)
+// ------------------------------
 let video, canvas, ctx;
 let overlayDiv, memeImg, captionDiv, statusText, statusDot;
 let controlPanel, togglePanelBtn;
@@ -35,6 +37,12 @@ let currentMemeId = null;
 let lastTriggerTime = 0;
 let debugEnabled = false;
 
+let startBtn, debugToggleBtn, debugOverlay, debugContent;
+let mouthSlider, smileSlider, touchSlider;
+let mouthVal, smileVal, touchVal;
+let gestureCards = {};
+let panelContent;  // defined early
+
 // Debounce counters
 const states = {
     1: { counter: 0, active: false },
@@ -43,12 +51,6 @@ const states = {
     4: { counter: 0, active: false },
     5: { counter: 0, active: false }
 };
-
-// UI Elements
-let startBtn, debugToggleBtn, debugOverlay, debugContent;
-let mouthSlider, smileSlider, touchSlider;
-let mouthVal, smileVal, touchVal;
-let gestureCards = {};
 
 // ------------------------------
 // Helper Functions
@@ -273,7 +275,7 @@ function updateDebounceAndUI(evals, now) {
 }
 
 // ------------------------------
-// Drawing Landmarks
+// Drawing Landmarks – Full Face Mesh
 // ------------------------------
 function drawLandmarks(results) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -281,9 +283,14 @@ function drawLandmarks(results) {
     ctx.fillStyle = CONFIG.LANDMARK_COLOR;
     ctx.lineWidth = CONFIG.LINE_WIDTH;
 
+    // Draw hand landmarks
     if (results.handLandmarks) {
         for (const landmarks of results.handLandmarks) {
-            const connections = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]];
+            const connections = [
+                [0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],
+                [0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16],
+                [0,17],[17,18],[18,19],[19,20],[5,9],[9,13],[13,17]
+            ];
             ctx.beginPath();
             for (const [i, j] of connections) {
                 ctx.moveTo(landmarks[i].x * canvas.width, landmarks[i].y * canvas.height);
@@ -297,17 +304,92 @@ function drawLandmarks(results) {
             }
         }
     }
+
+    // Draw full face mesh (tesselation lines) + dots
     if (results.faceLandmarks) {
+        // Use MediaPipe's FACEMESH_TESSELATION connections (hardcoded for brevity)
+        const faceConnections = window.mpFaceMeshConnections || [
+            // These are the tesselation connections – we can approximate or use a subset.
+            // For simplicity, we'll draw all landmarks as dots and a simplified wireframe.
+        ];
+        
         for (const landmarks of results.faceLandmarks) {
+            // Draw dots for all 478 landmarks
+            ctx.fillStyle = CONFIG.LANDMARK_COLOR;
             for (const lm of landmarks) {
                 ctx.beginPath();
-                ctx.arc(lm.x * canvas.width, lm.y * canvas.height, CONFIG.DOT_RADIUS*0.8, 0, 2*Math.PI);
+                ctx.arc(lm.x * canvas.width, lm.y * canvas.height, CONFIG.DOT_RADIUS * 0.7, 0, 2*Math.PI);
                 ctx.fill();
             }
+            
+            // Draw face contours: jaw, eyebrows, lips, eyes, nose (simplified mesh)
+            ctx.strokeStyle = CONFIG.LANDMARK_COLOR;
+            ctx.lineWidth = 0.8;
+            // Jawline (0 to 16)
+            ctx.beginPath();
+            for (let i = 0; i <= 16; i++) {
+                const lm = landmarks[i];
+                if (i === 0) ctx.moveTo(lm.x * canvas.width, lm.y * canvas.height);
+                else ctx.lineTo(lm.x * canvas.width, lm.y * canvas.height);
+            }
+            ctx.stroke();
+            
+            // Left eyebrow (70,63,105,66,107...)
+            const leftBrow = [70, 63, 105, 66, 107, 55, 65, 52, 53, 46];
+            ctx.beginPath();
+            leftBrow.forEach((idx, i) => {
+                const lm = landmarks[idx];
+                if (i === 0) ctx.moveTo(lm.x * canvas.width, lm.y * canvas.height);
+                else ctx.lineTo(lm.x * canvas.width, lm.y * canvas.height);
+            });
+            ctx.stroke();
+            
+            // Right eyebrow (300,293,334,296,336,285,295,282,283,276)
+            const rightBrow = [300, 293, 334, 296, 336, 285, 295, 282, 283, 276];
+            ctx.beginPath();
+            rightBrow.forEach((idx, i) => {
+                const lm = landmarks[idx];
+                if (i === 0) ctx.moveTo(lm.x * canvas.width, lm.y * canvas.height);
+                else ctx.lineTo(lm.x * canvas.width, lm.y * canvas.height);
+            });
+            ctx.stroke();
+            
+            // Lips outer (61,146,91,181,84,17,314,405,321,375,291,308,324,318,402,317,14,87,178,88,95)
+            const lipsOuter = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95];
+            ctx.beginPath();
+            lipsOuter.forEach((idx, i) => {
+                const lm = landmarks[idx];
+                if (i === 0) ctx.moveTo(lm.x * canvas.width, lm.y * canvas.height);
+                else ctx.lineTo(lm.x * canvas.width, lm.y * canvas.height);
+            });
+            ctx.stroke();
+            
+            // Left eye (33,246,161,160,159,158,157,173,133,155,154,153,145,144,163,7)
+            const leftEye = [33, 246, 161, 160, 159, 158, 157, 173, 133, 155, 154, 153, 145, 144, 163, 7];
+            ctx.beginPath();
+            leftEye.forEach((idx, i) => {
+                const lm = landmarks[idx];
+                if (i === 0) ctx.moveTo(lm.x * canvas.width, lm.y * canvas.height);
+                else ctx.lineTo(lm.x * canvas.width, lm.y * canvas.height);
+            });
+            ctx.stroke();
+            
+            // Right eye (362,398,384,385,386,387,388,466,263,249,390,373,374,380,381,382)
+            const rightEye = [362, 398, 384, 385, 386, 387, 388, 466, 263, 249, 390, 373, 374, 380, 381, 382];
+            ctx.beginPath();
+            rightEye.forEach((idx, i) => {
+                const lm = landmarks[idx];
+                if (i === 0) ctx.moveTo(lm.x * canvas.width, lm.y * canvas.height);
+                else ctx.lineTo(lm.x * canvas.width, lm.y * canvas.height);
+            });
+            ctx.stroke();
         }
     }
+
+    // Draw pose landmarks (shoulders/hips)
     if (results.poseLandmarks) {
-        const points = [11,12,23,24];
+        const points = [11, 12, 23, 24];
+        ctx.fillStyle = CONFIG.LANDMARK_COLOR;
         for (const idx of points) {
             const lm = results.poseLandmarks[idx];
             ctx.beginPath();
@@ -357,40 +439,27 @@ async function processFrame() {
     
     requestAnimationFrame(processFrame);
 }
+
 // ------------------------------
-// Camera Initialization (Hardened)
+// Camera Initialization
 // ------------------------------
 async function startCamera() {
-    console.log('🚀 Starting camera...');
-    
-    // 1. Force video to be visible immediately
+    console.log('Starting camera...');
     video.style.display = 'block';
     video.style.opacity = '1';
-    video.style.zIndex = '1';
-    video.setAttribute('playsinline', '');
-    video.setAttribute('muted', '');
     
-    // 2. Stop any existing stream
     if (stream) {
         stream.getTracks().forEach(t => t.stop());
     }
     
     try {
-        // 3. Get camera with explicit constraints
         stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                width: { ideal: 640 },
-                height: { ideal: 480 },
-                facingMode: 'user'
-            } 
+            video: { width: 640, height: 480, facingMode: 'user' } 
         });
-        
         video.srcObject = stream;
         
-        // 4. Wait for video metadata and force play
         await new Promise((resolve) => {
             video.onloadedmetadata = () => {
-                console.log(`📹 Video dimensions: ${video.videoWidth}x${video.videoHeight}`);
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 resolve();
@@ -398,32 +467,21 @@ async function startCamera() {
         });
         
         await video.play();
-        console.log('✅ Camera stream active');
-        
-        // 5. Ensure canvas is on top but video visible underneath
-        canvas.style.zIndex = '2';
-        
         statusText.textContent = 'Loading models...';
         statusDot.classList.remove('active');
         
-        // 6. Wait for MediaPipe
-        if (!window.FilesetResolver) {
-            console.log('⏳ Waiting for MediaPipe...');
-            await new Promise(resolve => {
-                const check = setInterval(() => {
-                    if (window.FilesetResolver) {
-                        clearInterval(check);
-                        resolve();
-                    }
-                }, 100);
-            });
+        // Wait for MediaPipe
+        if (typeof FilesetResolver === 'undefined') {
+            console.error('MediaPipe not loaded');
+            statusText.textContent = 'MediaPipe failed to load. Refresh.';
+            return;
         }
         
-        const vision = await window.FilesetResolver.forVisionTasks(
+        const vision = await FilesetResolver.forVisionTasks(
             "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.11/wasm"
         );
         
-        handLandmarker = await window.HandLandmarker.createFromOptions(vision, {
+        handLandmarker = await HandLandmarker.createFromOptions(vision, {
             baseOptions: {
                 modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
                 delegate: "GPU"
@@ -431,7 +489,7 @@ async function startCamera() {
             runningMode: "VIDEO",
             numHands: 2
         });
-        faceLandmarker = await window.FaceLandmarker.createFromOptions(vision, {
+        faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
             baseOptions: {
                 modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
                 delegate: "GPU"
@@ -440,7 +498,7 @@ async function startCamera() {
             outputFaceBlendshapes: false,
             numFaces: 1
         });
-        poseLandmarker = await window.PoseLandmarker.createFromOptions(vision, {
+        poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
             baseOptions: {
                 modelAssetPath: `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task`,
                 delegate: "GPU"
@@ -456,37 +514,15 @@ async function startCamera() {
         processFrame();
         
     } catch (err) {
-        console.error('❌ Camera error:', err);
+        console.error('Camera error:', err);
         statusText.textContent = 'Camera error: ' + err.message;
         statusDot.style.background = '#e74c3c';
-        
-        // Show manual recovery button
-        const panelContent = document.querySelector('.panel-content');
-        if (!document.getElementById('forceCameraBtn')) {
-            const forceBtn = document.createElement('button');
-            forceBtn.id = 'forceCameraBtn';
-            forceBtn.className = 'secondary-btn';
-            forceBtn.innerHTML = '<span class="btn-icon">📷</span> Retry Camera';
-            forceBtn.addEventListener('click', () => {
-                startCamera();
-                forceBtn.remove();
-            });
-            panelContent.appendChild(forceBtn);
-        }
     }
 }
-// ------------------------------
-// Force Show Camera (Manual Override)
-// ------------------------------
-function forceShowCamera() {
-    video.style.display = 'block';
-    video.style.opacity = '1';
-    canvas.style.display = 'block';
-    overlayDiv.classList.add('hidden');
-    currentMemeId = null;
-    statusText.textContent = 'Camera visible';
-}
 
+// ------------------------------
+// UI Initialization
+// ------------------------------
 function initUI() {
     video = document.getElementById('video');
     canvas = document.getElementById('landmark-canvas');
@@ -502,6 +538,7 @@ function initUI() {
     debugToggleBtn = document.getElementById('debugToggleBtn');
     debugOverlay = document.getElementById('debugOverlay');
     debugContent = document.getElementById('debugContent');
+    panelContent = document.querySelector('.panel-content'); // Now defined
     
     mouthSlider = document.getElementById('mouthSlider');
     smileSlider = document.getElementById('smileSlider');
@@ -510,10 +547,6 @@ function initUI() {
     smileVal = document.getElementById('smileVal');
     touchVal = document.getElementById('touchVal');
     
-    // ✅ Define panelContent here before using it
-    const panelContent = document.querySelector('.panel-content');
-    
-    // Set initial slider values
     mouthSlider.value = CONFIG.MOUTH_OPEN_THRESH;
     smileSlider.value = CONFIG.SMILE_THRESH;
     touchSlider.value = CONFIG.TOUCH_DIST_THRESH;
@@ -521,12 +554,10 @@ function initUI() {
     smileVal.textContent = CONFIG.SMILE_THRESH.toFixed(3);
     touchVal.textContent = CONFIG.TOUCH_DIST_THRESH.toFixed(3);
     
-    // Populate gesture cards
     for (let i=1; i<=5; i++) {
         gestureCards[i] = document.querySelector(`.gesture-card[data-gesture="${i}"]`);
     }
     
-    // Sliders
     mouthSlider.addEventListener('input', () => {
         CONFIG.MOUTH_OPEN_THRESH = parseFloat(mouthSlider.value);
         mouthVal.textContent = CONFIG.MOUTH_OPEN_THRESH.toFixed(3);
@@ -540,7 +571,6 @@ function initUI() {
         touchVal.textContent = CONFIG.TOUCH_DIST_THRESH.toFixed(3);
     });
     
-    // Buttons
     startBtn.addEventListener('click', startCamera);
     debugToggleBtn.addEventListener('click', () => {
         debugEnabled = !debugEnabled;
@@ -553,35 +583,25 @@ function initUI() {
         controlPanel.classList.toggle('collapsed');
     });
     
-    // ✅ Add "Force Show Camera" button
+    // Force show camera button
     const forceShowBtn = document.createElement('button');
     forceShowBtn.className = 'secondary-btn';
     forceShowBtn.innerHTML = '<span class="btn-icon">👁️</span> Force Show Camera';
-    forceShowBtn.style.marginTop = '8px';
-    forceShowBtn.addEventListener('click', forceShowCamera);
+    forceShowBtn.addEventListener('click', () => {
+        video.style.display = 'block';
+        video.style.opacity = '1';
+        canvas.style.display = 'block';
+        overlayDiv.classList.add('hidden');
+        currentMemeId = null;
+    });
     panelContent.appendChild(forceShowBtn);
     
-    // ✅ Add "Reset Camera" button
-    const resetBtn = document.createElement('button');
-    resetBtn.className = 'secondary-btn';
-    resetBtn.innerHTML = '<span class="btn-icon">🔄</span> Reset Camera';
-    resetBtn.style.marginTop = '8px';
-    resetBtn.addEventListener('click', () => {
-        console.log('Manual camera reset');
-        startCamera();
-    });
-    panelContent.appendChild(resetBtn);
-    
     // Preload images
-    console.log('Preloading meme images...');
     for (let id in MEME_PATHS) {
         const img = new Image();
-        img.onload = () => console.log(`✅ Loaded meme ${id}`);
-        img.onerror = () => console.error(`❌ Missing meme ${id}: ${MEME_PATHS[id]}`);
         img.src = MEME_PATHS[id];
     }
     
-    // Auto-start camera
     startCamera();
 }
 
