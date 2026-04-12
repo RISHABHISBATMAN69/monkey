@@ -1,39 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Gesture Meme · Minimal</title>
     <link rel="stylesheet" href="style.css">
-    <!-- MediaPipe tasks-vision from CDN with fallback -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.11/vision_bundle.js"></script>
+    <!-- MediaPipe tasks-vision from official Google CDN (most reliable) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js" crossorigin="anonymous"></script>
     <script>
-        if (typeof FilesetResolver === 'undefined') {
-            console.warn('jsdelivr failed, trying unpkg');
-            document.write('<script src="https://unpkg.com/@mediapipe/tasks-vision@0.10.11/vision_bundle.js"><\/script>');
+        // If the primary CDN fails, try unpkg as fallback
+        window.MEDIAPIPE_LOADED = false;
+        function checkMediaPipe() {
+            if (typeof FilesetResolver !== 'undefined') {
+                window.MEDIAPIPE_LOADED = true;
+                console.log('✅ MediaPipe loaded from primary CDN');
+            } else {
+                console.warn('Primary CDN failed, loading fallback...');
+                const fallbackScript = document.createElement('script');
+                fallbackScript.src = 'https://unpkg.com/@mediapipe/tasks-vision@0.10.14/vision_bundle.js';
+                fallbackScript.onload = () => {
+                    window.MEDIAPIPE_LOADED = true;
+                    console.log('✅ MediaPipe loaded from fallback');
+                };
+                fallbackScript.onerror = () => {
+                    console.error('❌ All MediaPipe CDNs failed');
+                    document.getElementById('status-text').innerText = 'MediaPipe load error - refresh or check network';
+                };
+                document.head.appendChild(fallbackScript);
+            }
         }
+        setTimeout(checkMediaPipe, 100);
     </script>
-</head>>
+</head>
 <body>
     <div class="app-container">
-        <!-- Camera View -->
         <div class="camera-container" id="cameraContainer">
             <video id="video" autoplay playsinline muted></video>
             <canvas id="landmark-canvas"></canvas>
             
-            <!-- Meme Overlay -->
             <div id="meme-overlay" class="meme-overlay hidden">
                 <div class="meme-background"></div>
                 <img id="meme-image" src="" alt="Meme">
                 <div id="meme-caption" class="meme-caption"></div>
             </div>
             
-            <!-- Status Indicator -->
             <div id="status-indicator" class="status-indicator">
                 <span class="status-dot"></span>
-                <span id="status-text">Camera Off</span>
+                <span id="status-text">Initializing...</span>
             </div>
         </div>
 
-        <!-- Control Panel (collapsible) -->
         <div class="control-panel" id="controlPanel">
             <div class="panel-header">
                 <h2>Gesture Control</h2>
@@ -45,13 +61,11 @@
             </div>
             
             <div class="panel-content">
-                <!-- Primary Actions -->
                 <button id="startBtn" class="primary-btn">
                     <span class="btn-icon">●</span>
                     Start Camera
                 </button>
                 
-                <!-- Gesture Cards (live feedback) -->
                 <div class="gesture-grid">
                     <div class="gesture-card" data-gesture="1">
                         <div class="gesture-icon">☝️</div>
@@ -95,24 +109,22 @@
                     </div>
                 </div>
                 
-                <!-- Sensitivity Sliders (collapsible section) -->
                 <details class="settings-section">
                     <summary>Sensitivity Tuning</summary>
                     <div class="slider-group">
-                        <label>Mouth Open <span id="mouthVal">0.04</span></label>
-                        <input type="range" id="mouthSlider" min="0.01" max="0.10" step="0.005" value="0.04">
+                        <label>Mouth Open <span id="mouthVal">0.025</span></label>
+                        <input type="range" id="mouthSlider" min="0.01" max="0.10" step="0.005" value="0.025">
                     </div>
                     <div class="slider-group">
-                        <label>Smile Stretch <span id="smileVal">0.28</span></label>
-                        <input type="range" id="smileSlider" min="0.15" max="0.40" step="0.01" value="0.28">
+                        <label>Smile Stretch <span id="smileVal">0.20</span></label>
+                        <input type="range" id="smileSlider" min="0.15" max="0.40" step="0.01" value="0.20">
                     </div>
                     <div class="slider-group">
-                        <label>Touch Distance <span id="touchVal">0.08</span></label>
-                        <input type="range" id="touchSlider" min="0.03" max="0.15" step="0.005" value="0.08">
+                        <label>Touch Distance <span id="touchVal">0.12</span></label>
+                        <input type="range" id="touchSlider" min="0.03" max="0.15" step="0.005" value="0.12">
                     </div>
                 </details>
                 
-                <!-- Debug Toggle -->
                 <button id="debugToggleBtn" class="secondary-btn">
                     <span class="btn-icon">🔍</span>
                     Show Debug Info
@@ -120,7 +132,6 @@
             </div>
         </div>
         
-        <!-- Debug Overlay (hidden by default) -->
         <div id="debugOverlay" class="debug-overlay hidden">
             <pre id="debugContent"></pre>
         </div>
@@ -129,12 +140,3 @@
     <script src="app.js"></script>
 </body>
 </html>
-<!-- Calibration Tips -->
-<div style="margin-top: 16px; padding: 12px; background: rgba(74,158,255,0.1); border-radius: 12px; border-left: 3px solid var(--accent);">
-    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px;">💡 Tips for better detection:</p>
-    <ul style="font-size: 0.75rem; color: var(--text-secondary); padding-left: 16px; line-height: 1.5;">
-        <li>Good lighting on your face</li>
-        <li>Hold hand clearly in frame</li>
-        <li>Adjust sliders if not triggering</li>
-    </ul>
-</div>
