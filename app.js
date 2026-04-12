@@ -357,30 +357,40 @@ async function processFrame() {
     
     requestAnimationFrame(processFrame);
 }
-
 // ------------------------------
-// Camera Initialization (Robust)
+// Camera Initialization (Hardened)
 // ------------------------------
 async function startCamera() {
-    console.log('Starting camera...');
+    console.log('🚀 Starting camera...');
     
-    // Ensure video element is visible
+    // 1. Force video to be visible immediately
     video.style.display = 'block';
     video.style.opacity = '1';
+    video.style.zIndex = '1';
+    video.setAttribute('playsinline', '');
+    video.setAttribute('muted', '');
     
+    // 2. Stop any existing stream
     if (stream) {
         stream.getTracks().forEach(t => t.stop());
     }
     
     try {
+        // 3. Get camera with explicit constraints
         stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { width: 640, height: 480, facingMode: 'user' } 
+            video: { 
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: 'user'
+            } 
         });
+        
         video.srcObject = stream;
         
-        // Wait for video to be ready
+        // 4. Wait for video metadata and force play
         await new Promise((resolve) => {
             video.onloadedmetadata = () => {
+                console.log(`📹 Video dimensions: ${video.videoWidth}x${video.videoHeight}`);
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 resolve();
@@ -388,14 +398,17 @@ async function startCamera() {
         });
         
         await video.play();
-        console.log('Camera stream active');
+        console.log('✅ Camera stream active');
+        
+        // 5. Ensure canvas is on top but video visible underneath
+        canvas.style.zIndex = '2';
         
         statusText.textContent = 'Loading models...';
         statusDot.classList.remove('active');
         
-        // Wait for MediaPipe
+        // 6. Wait for MediaPipe
         if (!window.FilesetResolver) {
-            console.log('Waiting for MediaPipe...');
+            console.log('⏳ Waiting for MediaPipe...');
             await new Promise(resolve => {
                 const check = setInterval(() => {
                     if (window.FilesetResolver) {
@@ -443,7 +456,7 @@ async function startCamera() {
         processFrame();
         
     } catch (err) {
-        console.error('Camera error:', err);
+        console.error('❌ Camera error:', err);
         statusText.textContent = 'Camera error: ' + err.message;
         statusDot.style.background = '#e74c3c';
         
@@ -462,7 +475,6 @@ async function startCamera() {
         }
     }
 }
-
 // ------------------------------
 // Force Show Camera (Manual Override)
 // ------------------------------
@@ -479,6 +491,16 @@ function forceShowCamera() {
 // UI Initialization
 // ------------------------------
 function initUI() {
+    // Add emergency reset button
+const resetBtn = document.createElement('button');
+resetBtn.className = 'secondary-btn';
+resetBtn.innerHTML = '<span class="btn-icon">🔄</span> Reset Camera';
+resetBtn.style.marginTop = '8px';
+resetBtn.addEventListener('click', () => {
+    console.log('Manual camera reset');
+    startCamera();
+});
+panelContent.appendChild(resetBtn);
     video = document.getElementById('video');
     canvas = document.getElementById('landmark-canvas');
     ctx = canvas.getContext('2d');
