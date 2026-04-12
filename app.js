@@ -1,19 +1,19 @@
 // ------------------------------
-// Configuration (MORE SENSITIVE - EASIER TO TRIGGER)
+// Configuration (Sensitive - Easy Trigger)
 // ------------------------------
 const CONFIG = {
     LANDMARK_COLOR: '#ffffff',
     LINE_WIDTH: 1.5,
     DOT_RADIUS: 2.0,
-    ACTIVATION_FRAMES: 2,        // Reduced from 4 - triggers faster
-    TRIGGER_COOLDOWN: 1500,      // 1.5 seconds between memes
-    MOUTH_OPEN_THRESH: 0.025,    // Lower = easier to trigger (was 0.04)
-    SMILE_THRESH: 0.20,          // Lower = easier to trigger (was 0.28)
-    TOUCH_DIST_THRESH: 0.12,     // Higher = more forgiving distance (was 0.08)
-    FINGER_EXTEND_THRESH_Y: 0.02, // Lower = easier finger detection
-    EYE_CLOSED_THRESH: 0.18,     // Higher = easier wink detection
-    CHEST_PROXIMITY_THRESH: 0.20, // Higher = more forgiving (was 0.15)
-    EYES_UP_THRESH: 0.01,        // Lower = easier to trigger looking up
+    ACTIVATION_FRAMES: 2,
+    TRIGGER_COOLDOWN: 1500,
+    MOUTH_OPEN_THRESH: 0.025,
+    SMILE_THRESH: 0.20,
+    TOUCH_DIST_THRESH: 0.12,
+    FINGER_EXTEND_THRESH_Y: 0.02,
+    EYE_CLOSED_THRESH: 0.18,
+    CHEST_PROXIMITY_THRESH: 0.20,
+    EYES_UP_THRESH: 0.01,
 };
 
 const MEME_PATHS = {
@@ -50,24 +50,8 @@ let mouthSlider, smileSlider, touchSlider;
 let mouthVal, smileVal, touchVal;
 let gestureCards = {};
 
-// Ensure MediaPipe is loaded
-function waitForMediaPipe() {
-    return new Promise((resolve) => {
-        if (window.FilesetResolver && window.HandLandmarker) {
-            resolve();
-        } else {
-            const check = setInterval(() => {
-                if (window.FilesetResolver && window.HandLandmarker) {
-                    clearInterval(check);
-                    resolve();
-                }
-            }, 100);
-        }
-    });
-}
-
 // ------------------------------
-// Helper functions (same as before but with slight adjustments)
+// Helper Functions
 // ------------------------------
 function normalizedDistance(p1, p2) {
     const dx = p1.x - p2.x;
@@ -126,7 +110,7 @@ function isGazingUp(landmarks) {
 }
 
 // ------------------------------
-// Gesture evaluators (return result + debug)
+// Gesture Evaluators
 // ------------------------------
 function evaluateGesture1(hands, face, pose) {
     if (!hands.length || !face) return { result: false };
@@ -211,7 +195,7 @@ function evaluateGesture5(hands, face, pose) {
 }
 
 // ------------------------------
-// Debounce and UI update
+// Debounce and UI Update
 // ------------------------------
 function updateDebounceAndUI(evals, now) {
     let anyActive = false;
@@ -228,14 +212,10 @@ function updateDebounceAndUI(evals, now) {
         }
         state.active = state.counter >= CONFIG.ACTIVATION_FRAMES;
         
-        // Update UI card
         const card = gestureCards[id];
         if (card) {
             const statusSpan = card.querySelector('.gesture-status');
-            const progressBar = card.querySelector('.progress-bar');
             const progressPercent = (state.counter / CONFIG.ACTIVATION_FRAMES) * 100;
-            progressBar.style.setProperty('--progress', `${progressPercent}%`);
-            progressBar.style.background = `linear-gradient(to right, var(--accent) ${progressPercent}%, rgba(255,255,255,0.1) ${progressPercent}%)`;
             
             if (state.active) {
                 card.classList.add('active');
@@ -258,7 +238,6 @@ function updateDebounceAndUI(evals, now) {
         }
     }
 
-    // Cooldown and meme trigger
     if (anyActive && (now - lastTriggerTime) > CONFIG.TRIGGER_COOLDOWN) {
         if (currentMemeId !== activeId) {
             currentMemeId = activeId;
@@ -268,7 +247,6 @@ function updateDebounceAndUI(evals, now) {
         currentMemeId = null;
     }
 
-    // Update overlay
     if (currentMemeId) {
         overlayDiv.classList.remove('hidden');
         memeImg.src = MEME_PATHS[currentMemeId];
@@ -279,7 +257,6 @@ function updateDebounceAndUI(evals, now) {
         statusText.textContent = isRunning ? 'Tracking...' : 'Camera Off';
     }
     
-    // Update debug if enabled
     if (debugEnabled) {
         let debugStr = '';
         for (let id=1; id<=5; id++) {
@@ -296,7 +273,7 @@ function updateDebounceAndUI(evals, now) {
 }
 
 // ------------------------------
-// Drawing landmarks (unchanged but with configurable style)
+// Drawing Landmarks
 // ------------------------------
 function drawLandmarks(results) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -341,7 +318,7 @@ function drawLandmarks(results) {
 }
 
 // ------------------------------
-// Frame processing loop
+// Frame Processing
 // ------------------------------
 async function processFrame() {
     if (!isRunning || !video.videoWidth) {
@@ -382,24 +359,52 @@ async function processFrame() {
 }
 
 // ------------------------------
-// Camera initialization (with MediaPipe wait)
+// Camera Initialization (Robust)
 // ------------------------------
 async function startCamera() {
+    console.log('Starting camera...');
+    
+    // Ensure video element is visible
+    video.style.display = 'block';
+    video.style.opacity = '1';
+    
     if (stream) {
         stream.getTracks().forEach(t => t.stop());
     }
+    
     try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { width: 640, height: 480, facingMode: 'user' } 
+        });
         video.srcObject = stream;
+        
+        // Wait for video to be ready
+        await new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                resolve();
+            };
+        });
+        
         await video.play();
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        console.log('Camera stream active');
         
         statusText.textContent = 'Loading models...';
         statusDot.classList.remove('active');
         
-        // Wait for MediaPipe to be ready
-        await waitForMediaPipe();
+        // Wait for MediaPipe
+        if (!window.FilesetResolver) {
+            console.log('Waiting for MediaPipe...');
+            await new Promise(resolve => {
+                const check = setInterval(() => {
+                    if (window.FilesetResolver) {
+                        clearInterval(check);
+                        resolve();
+                    }
+                }, 100);
+            });
+        }
         
         const vision = await window.FilesetResolver.forVisionTasks(
             "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.11/wasm"
@@ -436,10 +441,38 @@ async function startCamera() {
         statusText.textContent = 'Ready';
         startBtn.innerHTML = '<span class="btn-icon">●</span> Restart Camera';
         processFrame();
+        
     } catch (err) {
+        console.error('Camera error:', err);
         statusText.textContent = 'Camera error: ' + err.message;
-        console.error(err);
+        statusDot.style.background = '#e74c3c';
+        
+        // Show manual recovery button
+        const panelContent = document.querySelector('.panel-content');
+        if (!document.getElementById('forceCameraBtn')) {
+            const forceBtn = document.createElement('button');
+            forceBtn.id = 'forceCameraBtn';
+            forceBtn.className = 'secondary-btn';
+            forceBtn.innerHTML = '<span class="btn-icon">📷</span> Retry Camera';
+            forceBtn.addEventListener('click', () => {
+                startCamera();
+                forceBtn.remove();
+            });
+            panelContent.appendChild(forceBtn);
+        }
     }
+}
+
+// ------------------------------
+// Force Show Camera (Manual Override)
+// ------------------------------
+function forceShowCamera() {
+    video.style.display = 'block';
+    video.style.opacity = '1';
+    canvas.style.display = 'block';
+    overlayDiv.classList.add('hidden');
+    currentMemeId = null;
+    statusText.textContent = 'Camera visible';
 }
 
 // ------------------------------
@@ -468,76 +501,7 @@ function initUI() {
     smileVal = document.getElementById('smileVal');
     touchVal = document.getElementById('touchVal');
     
-    // Populate gesture cards
-    for (let i=1; i<=5; i++) {
-        gestureCards[i] = document.querySelector(`.gesture-card[data-gesture="${i}"]`);
-    }
-    
-    // Sliders
-    mouthSlider.addEventListener('input', () => {
-        CONFIG.MOUTH_OPEN_THRESH = parseFloat(mouthSlider.value);
-        mouthVal.textContent = CONFIG.MOUTH_OPEN_THRESH.toFixed(3);
-    });
-    smileSlider.addEventListener('input', () => {
-        CONFIG.SMILE_THRESH = parseFloat(smileSlider.value);
-        smileVal.textContent = CONFIG.SMILE_THRESH.toFixed(3);
-    });
-    touchSlider.addEventListener('input', () => {
-        CONFIG.TOUCH_DIST_THRESH = parseFloat(touchSlider.value);
-        touchVal.textContent = CONFIG.TOUCH_DIST_THRESH.toFixed(3);
-    });
-    
-    // Buttons
-    startBtn.addEventListener('click', startCamera);
-    debugToggleBtn.addEventListener('click', () => {
-        debugEnabled = !debugEnabled;
-        debugOverlay.classList.toggle('hidden', !debugEnabled);
-        debugToggleBtn.innerHTML = debugEnabled ? 
-            '<span class="btn-icon">🔍</span> Hide Debug Info' : 
-            '<span class="btn-icon">🔍</span> Show Debug Info';
-    });
-    togglePanelBtn.addEventListener('click', () => {
-        controlPanel.classList.toggle('collapsed');
-    });
-    
-    // Preload images with error handling
-    for (let id in MEME_PATHS) {
-        const img = new Image();
-        img.onerror = () => console.warn(`Failed to load ${MEME_PATHS[id]}`);
-        img.src = MEME_PATHS[id];
-    }
-    
-    // Auto-start camera
-    startCamera();
-}
-window.addEventListener('load', initUI);
-// ------------------------------
-// UI Initialization (Production - No Test Mode)
-// ------------------------------
-function initUI() {
-    video = document.getElementById('video');
-    canvas = document.getElementById('landmark-canvas');
-    ctx = canvas.getContext('2d');
-    overlayDiv = document.getElementById('meme-overlay');
-    memeImg = document.getElementById('meme-image');
-    captionDiv = document.getElementById('meme-caption');
-    statusText = document.getElementById('status-text');
-    statusDot = document.querySelector('.status-dot');
-    controlPanel = document.getElementById('controlPanel');
-    togglePanelBtn = document.getElementById('togglePanelBtn');
-    startBtn = document.getElementById('startBtn');
-    debugToggleBtn = document.getElementById('debugToggleBtn');
-    debugOverlay = document.getElementById('debugOverlay');
-    debugContent = document.getElementById('debugContent');
-    
-    mouthSlider = document.getElementById('mouthSlider');
-    smileSlider = document.getElementById('smileSlider');
-    touchSlider = document.getElementById('touchSlider');
-    mouthVal = document.getElementById('mouthVal');
-    smileVal = document.getElementById('smileVal');
-    touchVal = document.getElementById('touchVal');
-    
-    // Set initial slider values to match new thresholds
+    // Set initial slider values
     mouthSlider.value = CONFIG.MOUTH_OPEN_THRESH;
     smileSlider.value = CONFIG.SMILE_THRESH;
     touchSlider.value = CONFIG.TOUCH_DIST_THRESH;
@@ -577,6 +541,15 @@ function initUI() {
         controlPanel.classList.toggle('collapsed');
     });
     
+    // Add "Force Show Camera" button to panel
+    const panelContent = document.querySelector('.panel-content');
+    const forceShowBtn = document.createElement('button');
+    forceShowBtn.className = 'secondary-btn';
+    forceShowBtn.innerHTML = '<span class="btn-icon">👁️</span> Force Show Camera';
+    forceShowBtn.style.marginTop = '8px';
+    forceShowBtn.addEventListener('click', forceShowCamera);
+    panelContent.appendChild(forceShowBtn);
+    
     // Preload images
     console.log('Preloading meme images...');
     for (let id in MEME_PATHS) {
@@ -589,9 +562,5 @@ function initUI() {
     // Auto-start camera
     startCamera();
 }
-        img.src = MEME_PATHS[id];
-    }
-    
-    // Auto-start camera
-    startCamera();
-}
+
+window.addEventListener('load', initUI);
