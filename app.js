@@ -360,11 +360,8 @@ function checkGestureCombinations(handResults, faceResults, currentTime) {
     // 2. Hand on chin + Eyes up
     else if (handGesture === 'chin_touch' && faceExpression === 'eyes_up') {
         triggeredMeme = './thinking monkey.webp';
-    }
-    // 3. Hands on chest + Gasping
-else if (handGesture === 'hands_on_chest' && faceExpression === 'gasping') {
-    triggeredMeme = './image_745226.png';
-}
+    }else if (handGesture === 'hands_on_chest' && faceExpression === 'gasping') {
+    triggeredMeme = './image_745226.png';}
     
     // 4. Double middle fingers + Stoic
     else if (handGesture === 'double_middle' && faceExpression === 'stoic') {
