@@ -169,7 +169,7 @@ function toggleTracking() {
 // Main Detection Loop
 function detectGestures() {
     // Define nowInMs using the current high-resolution timestamp
-    const nowInMs = performance.now();     function detectGestures() {
+    const nowInMs = performance.now();    
     if (!state.webcamRunning) return;
 
     // SAFETY CHECK: If models aren't ready, skip this frame instead of crashing
