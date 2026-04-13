@@ -1,10 +1,6 @@
 // MediaPipe Vision Tasks
-import { 
-    FaceLandmarker, 
-    HandLandmarker, 
-    FilesetResolver, 
-    DrawingUtils 
-} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js";
+let FaceLandmarker, HandLandmarker, FilesetResolver, DrawingUtils;
+
 // Application State
 const state = {
     camera: false,
@@ -36,6 +32,22 @@ const elements = {
 // Canvas Context
 let canvasCtx = null;
 let drawingUtils = null;
+
+// Load MediaPipe Libraries
+async function loadMediaPipeLibraries() {
+    try {
+        const vision = await (await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js')).default;
+        FaceLandmarker = vision.FaceLandmarker;
+        HandLandmarker = vision.HandLandmarker;
+        FilesetResolver = vision.FilesetResolver;
+        DrawingUtils = vision.DrawingUtils;
+        return true;
+    } catch (error) {
+        console.error('Failed to load MediaPipe libraries:', error);
+        updateStatus('Error loading MediaPipe libraries');
+        return false;
+    }
+}
 
 // Initialize MediaPipe
 async function initializeMediaPipe() {
@@ -69,7 +81,9 @@ async function initializeMediaPipe() {
         });
 
         updateStatus('Ready to start');
-        elements.toggleCamera.disabled = false;
+        if (elements.toggleCamera) {
+            elements.toggleCamera.disabled = false;
+        }
         
     } catch (error) {
         console.error('MediaPipe initialization error:', error);
@@ -96,6 +110,11 @@ async function startCamera() {
             }
         });
 
+        if (!elements.webcam) {
+            updateStatus('Webcam element not found');
+            return;
+        }
+
         elements.webcam.srcObject = stream;
         elements.webcam.classList.add('active');
         
@@ -106,6 +125,11 @@ async function startCamera() {
         });
 
         // Setup canvas
+        if (!elements.canvas) {
+            updateStatus('Canvas element not found');
+            return;
+        }
+
         canvasCtx = elements.canvas.getContext('2d');
         drawingUtils = new DrawingUtils(canvasCtx);
         elements.canvas.width = elements.webcam.videoWidth;
@@ -113,8 +137,14 @@ async function startCamera() {
 
         state.camera = true;
         state.webcamRunning = true;
-        elements.toggleCamera.textContent = 'Stop Camera';
-        elements.toggleTracking.disabled = false;
+        
+        if (elements.toggleCamera) {
+            elements.toggleCamera.textContent = 'Stop Camera';
+        }
+        if (elements.toggleTracking) {
+            elements.toggleTracking.disabled = false;
+        }
+        
         updateStatus('Camera active');
 
         // Start detection loop
@@ -127,12 +157,16 @@ async function startCamera() {
 }
 
 function stopCamera() {
-    if (elements.webcam.srcObject) {
+    if (elements.webcam && elements.webcam.srcObject) {
         elements.webcam.srcObject.getTracks().forEach(track => track.stop());
     }
     
-    elements.webcam.classList.remove('active');
-    elements.canvas.classList.remove('visible');
+    if (elements.webcam) {
+        elements.webcam.classList.remove('active');
+    }
+    if (elements.canvas) {
+        elements.canvas.classList.remove('visible');
+    }
     
     if (state.animationFrame) {
         cancelAnimationFrame(state.animationFrame);
@@ -141,9 +175,15 @@ function stopCamera() {
     state.camera = false;
     state.webcamRunning = false;
     state.tracking = false;
-    elements.toggleCamera.textContent = 'Start Camera';
-    elements.toggleTracking.disabled = true;
-    elements.toggleTracking.textContent = 'Show Tracking';
+    
+    if (elements.toggleCamera) {
+        elements.toggleCamera.textContent = 'Start Camera';
+    }
+    if (elements.toggleTracking) {
+        elements.toggleTracking.disabled = true;
+        elements.toggleTracking.textContent = 'Show Tracking';
+    }
+    
     updateStatus('Camera off');
 }
 
@@ -152,13 +192,25 @@ function toggleTracking() {
     state.tracking = !state.tracking;
     
     if (state.tracking) {
-        elements.canvas.classList.add('visible');
-        elements.toggleTracking.textContent = 'Hide Tracking';
-        elements.debugInfo.classList.add('active');
+        if (elements.canvas) {
+            elements.canvas.classList.add('visible');
+        }
+        if (elements.toggleTracking) {
+            elements.toggleTracking.textContent = 'Hide Tracking';
+        }
+        if (elements.debugInfo) {
+            elements.debugInfo.classList.add('active');
+        }
     } else {
-        elements.canvas.classList.remove('visible');
-        elements.toggleTracking.textContent = 'Show Tracking';
-        elements.debugInfo.classList.remove('active');
+        if (elements.canvas) {
+            elements.canvas.classList.remove('visible');
+        }
+        if (elements.toggleTracking) {
+            elements.toggleTracking.textContent = 'Show Tracking';
+        }
+        if (elements.debugInfo) {
+            elements.debugInfo.classList.remove('active');
+        }
     }
 }
 
@@ -168,47 +220,57 @@ function detectGestures() {
 
     const nowInMs = Date.now();
     
-    // Detect hands
-    const handResults = state.handLandmarker.detectForVideo(elements.webcam, nowInMs);
-    
-    // Detect face
-    const faceResults = state.faceLandmarker.detectForVideo(elements.webcam, nowInMs);
-
-    // Clear canvas if tracking is enabled
-    if (state.tracking && canvasCtx) {
-        canvasCtx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
-        canvasCtx.save();
-        
-        // Draw hand landmarks
-        if (handResults.landmarks) {
-            for (const landmarks of handResults.landmarks) {
-                drawingUtils.drawConnectors(
-                    landmarks,
-                    HandLandmarker.HAND_CONNECTIONS,
-                    { color: 'rgba(255, 255, 255, 0.3)', lineWidth: 1 }
-                );
-                drawingUtils.drawLandmarks(
-                    landmarks,
-                    { color: 'rgba(255, 255, 255, 0.6)', lineWidth: 1, radius: 2 }
-                );
-            }
-        }
-
-        // Draw face mesh (simplified)
-        if (faceResults.faceLandmarks && faceResults.faceLandmarks.length > 0) {
-            const faceLandmarks = faceResults.faceLandmarks[0];
-            drawingUtils.drawConnectors(
-                faceLandmarks,
-                FaceLandmarker.FACE_LANDMARKS_TESSELATION,
-                { color: 'rgba(200, 200, 200, 0.15)', lineWidth: 0.5 }
-            );
-        }
-
-        canvasCtx.restore();
+    // Validate models are loaded
+    if (!state.handLandmarker || !state.faceLandmarker || !elements.webcam) {
+        state.animationFrame = requestAnimationFrame(detectGestures);
+        return;
     }
 
-    // Gesture Recognition
-    checkGestureCombinations(handResults, faceResults, nowInMs);
+    try {
+        // Detect hands
+        const handResults = state.handLandmarker.detectForVideo(elements.webcam, nowInMs);
+        
+        // Detect face
+        const faceResults = state.faceLandmarker.detectForVideo(elements.webcam, nowInMs);
+
+        // Clear canvas if tracking is enabled
+        if (state.tracking && canvasCtx && elements.canvas && drawingUtils) {
+            canvasCtx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+            canvasCtx.save();
+            
+            // Draw hand landmarks
+            if (handResults.landmarks) {
+                for (const landmarks of handResults.landmarks) {
+                    drawingUtils.drawConnectors(
+                        landmarks,
+                        HandLandmarker.HAND_CONNECTIONS,
+                        { color: 'rgba(255, 255, 255, 0.3)', lineWidth: 1 }
+                    );
+                    drawingUtils.drawLandmarks(
+                        landmarks,
+                        { color: 'rgba(255, 255, 255, 0.6)', lineWidth: 1, radius: 2 }
+                    );
+                }
+            }
+
+            // Draw face mesh (simplified)
+            if (faceResults.faceLandmarks && faceResults.faceLandmarks.length > 0) {
+                const faceLandmarks = faceResults.faceLandmarks[0];
+                drawingUtils.drawConnectors(
+                    faceLandmarks,
+                    FaceLandmarker.FACE_LANDMARKS_TESSELATION,
+                    { color: 'rgba(200, 200, 200, 0.15)', lineWidth: 0.5 }
+                );
+            }
+
+            canvasCtx.restore();
+        }
+
+        // Gesture Recognition
+        checkGestureCombinations(handResults, faceResults, nowInMs);
+    } catch (error) {
+        console.error('Error in detection loop:', error);
+    }
 
     // Continue loop
     state.animationFrame = requestAnimationFrame(detectGestures);
@@ -226,8 +288,12 @@ function checkGestureCombinations(handResults, faceResults, currentTime) {
 
     // Update debug info
     if (state.tracking) {
-        elements.handStatus.textContent = handGesture || 'None';
-        elements.faceStatus.textContent = faceExpression || 'Neutral';
+        if (elements.handStatus) {
+            elements.handStatus.textContent = handGesture || 'None';
+        }
+        if (elements.faceStatus) {
+            elements.faceStatus.textContent = faceExpression || 'Neutral';
+        }
     }
 
     // Match gesture combinations
@@ -262,12 +328,11 @@ function checkGestureCombinations(handResults, faceResults, currentTime) {
 
 // Hand Gesture Detection
 function detectHandGesture(results) {
-    if (!results.landmarks || results.landmarks.length === 0) {
+    if (!results || !results.landmarks || results.landmarks.length === 0) {
         return null;
     }
 
     const hands = results.landmarks;
-    const handedness = results.handednesses || [];
 
     // Single hand gestures
     if (hands.length === 1) {
@@ -318,7 +383,7 @@ function detectHandGesture(results) {
 
 // Face Expression Detection
 function detectFaceExpression(results) {
-    if (!results.faceBlendshapes || results.faceBlendshapes.length === 0) {
+    if (!results || !results.faceBlendshapes || results.faceBlendshapes.length === 0) {
         return 'neutral';
     }
 
@@ -367,24 +432,30 @@ function detectFaceExpression(results) {
 
 // Helper Functions for Hand Detection
 function isFingerExtended(hand, tipIndex) {
+    if (!hand || !hand[tipIndex] || !hand[tipIndex - 2]) {
+        return false;
+    }
     const tip = hand[tipIndex];
     const pip = hand[tipIndex - 2];
     return tip.y < pip.y; // Finger tip is above PIP joint
 }
 
 function isTouchingChin(hand) {
+    if (!hand || !hand[0]) return false;
     const wrist = hand[0];
     // Check if wrist is in lower-center area (chin region)
     return wrist.y > 0.6 && wrist.x > 0.3 && wrist.x < 0.7;
 }
 
 function isPointingToChin(hand) {
+    if (!hand || !hand[8]) return false;
     const indexTip = hand[8];
     // Index tip in chin area
     return indexTip.y > 0.65 && indexTip.x > 0.35 && indexTip.x < 0.65;
 }
 
 function isHandOnChest(hand) {
+    if (!hand || !hand[0]) return false;
     const wrist = hand[0];
     // Wrist in chest area (middle-lower screen)
     return wrist.y > 0.5 && wrist.y < 0.8;
@@ -392,6 +463,8 @@ function isHandOnChest(hand) {
 
 // Meme Display
 function showMeme(imagePath) {
+    if (!elements.memeImage || !elements.memeOverlay) return;
+    
     if (state.currentMeme === imagePath) return; // Already showing this meme
 
     state.currentMeme = imagePath;
@@ -400,7 +473,9 @@ function showMeme(imagePath) {
     
     // Trigger animation
     setTimeout(() => {
-        elements.memeOverlay.classList.add('active');
+        if (elements.memeOverlay) {
+            elements.memeOverlay.classList.add('active');
+        }
     }, 10);
 
     // Auto-hide after 3 seconds
@@ -410,35 +485,50 @@ function showMeme(imagePath) {
 }
 
 function hideMeme() {
+    if (!elements.memeOverlay) return;
+    
     elements.memeOverlay.classList.remove('active');
     setTimeout(() => {
-        elements.memeOverlay.classList.add('hidden');
+        if (elements.memeOverlay) {
+            elements.memeOverlay.classList.add('hidden');
+        }
         state.currentMeme = null;
     }, 300);
 }
 
 // UI Updates
 function updateStatus(message) {
-    elements.statusText.textContent = message;
+    if (elements.statusText) {
+        elements.statusText.textContent = message;
+    }
 }
 
 // Event Listeners
-elements.toggleCamera.addEventListener('click', toggleCamera);
-elements.toggleTracking.addEventListener('click', toggleTracking);
-elements.memeOverlay.addEventListener('click', hideMeme);
+if (elements.toggleCamera) {
+    elements.toggleCamera.addEventListener('click', toggleCamera);
+}
+if (elements.toggleTracking) {
+    elements.toggleTracking.addEventListener('click', toggleTracking);
+}
+if (elements.memeOverlay) {
+    elements.memeOverlay.addEventListener('click', hideMeme);
+}
 
 // Test buttons
-elements.testButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        const memePath = button.getAttribute('data-meme');
-        showMeme(memePath);
-        state.lastDetectionTime = Date.now(); // Reset cooldown
+if (elements.testButtons && elements.testButtons.length > 0) {
+    elements.testButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const memePath = button.getAttribute('data-meme');
+            showMeme(memePath);
+            state.lastDetectionTime = Date.now(); // Reset cooldown
+        });
     });
-});
+}
 
 // Initialize on load
-window.addEventListener('load', () => {
-    initializeMediaPipe();
+window.addEventListener('load', async () => {
+    await loadMediaPipeLibraries();
+    await initializeMediaPipe();
 });
 
 // Cleanup on unload
