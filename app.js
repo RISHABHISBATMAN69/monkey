@@ -109,7 +109,8 @@ async function startCamera() {
 
         // Setup canvas
         canvasCtx = elements.canvas.getContext('2d');
-        drawingUtils = new DrawingUtils(canvasCtx);
+     drawingUtils = new DrawingUtils(canvasCtx);
+console.log("DrawingUtils initialized:", drawingUtils); // Check your console for this!
         elements.canvas.width = elements.webcam.videoWidth;
         elements.canvas.height = elements.webcam.videoHeight;
 
@@ -166,6 +167,15 @@ function toggleTracking() {
 
 // Main Detection Loop
 function detectGestures() {
+    // Inside detectGestures()
+const handResults = state.handLandmarker.detectForVideo(elements.webcam, nowInMs);
+
+// ADD THIS COMMAND:
+if (handResults.landmarks.length > 0) {
+    console.log("✅ Tracking Active! Hand detected:", handResults.landmarks[0]);
+} else {
+    console.log("❌ Camera on, but no hand in frame.");
+}
     if (!state.webcamRunning) return;
 
     // FIX: Only run the AI if the webcam has actually generated a new frame
