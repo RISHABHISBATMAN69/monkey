@@ -114,8 +114,29 @@ function toggleDrawer() {
 function enableAudio() {
     if (!state.audioStarted && elements.bgMusic) {
         state.audioStarted = true;
+        
+        // Ensure audio element is not muted
         elements.bgMusic.muted = false;
-        elements.bgMusic.play().catch(err => console.log('Audio autoplay failed (expected):', err));
+        elements.bgMusic.volume = 0.5; // Set reasonable default volume
+        
+        // Try to play with error handling
+        const playPromise = elements.bgMusic.play();
+        
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    console.log('Audio playing');
+                })
+                .catch(err => {
+                    console.log('Audio autoplay failed:', err);
+                    // Retry: some Android browsers need a slight delay
+                    setTimeout(() => {
+                        elements.bgMusic.play().catch(e => {
+                            console.log('Audio retry failed:', e);
+                        });
+                    }, 100);
+                });
+        }
     }
 }
 
