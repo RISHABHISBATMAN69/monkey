@@ -370,8 +370,10 @@ function checkGestureCombinations(handResults, faceResults, currentTime) {
     // 5. Point to chin + Wink
     else if (handGesture === 'chin_point' && faceExpression === 'wink') {
         triggeredMeme = './image_745cee.png';
-    }
-
+    }// 6. Hands on head + Gasping (Mouth open)
+     else if (handGesture === 'hands_on_head' && faceExpression === 'gasping') {
+    triggeredMeme = './ccg.jpg';
+     }
     if (triggeredMeme) {
         showMeme(triggeredMeme);
         state.lastDetectionTime = currentTime;
@@ -421,9 +423,11 @@ function detectHandGesture(results) {
     if (hands.length === 2) {
         const hand1 = hands[0];
         const hand2 = hands[1];
-
-        
-
+       
+        // We check if the wrists (landmark 0) are very high up (y < 0.3)
+        if (hand1[0].y < 0.3 && hand2[0].y < 0.3) {
+          return 'hands_on_head';
+          }
         // Double middle fingers
         if (isFingerExtended(hand1, 12) && isFingerExtended(hand2, 12) &&
             !isFingerExtended(hand1, 8) && !isFingerExtended(hand2, 8)) {
