@@ -365,7 +365,7 @@ function checkGestureCombinations(handResults, faceResults, currentTime) {
 else if (handGesture === 'hands_on_chest' && faceExpression === 'gasping') {
     triggeredMeme = './image_745226.png';
 }
-    }
+    
     // 4. Double middle fingers + Stoic
     else if (handGesture === 'double_middle' && faceExpression === 'stoic') {
         triggeredMeme = './image_745264.png';
