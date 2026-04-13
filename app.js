@@ -1,6 +1,10 @@
-// MediaPipe Vision Tasks
-const { FaceLandmarker, HandLandmarker, FilesetResolver, DrawingUtils } = window;
-
+// NEW: Import directly from the CDN
+import {
+    FaceLandmarker,
+    HandLandmarker,
+    FilesetResolver,
+    DrawingUtils
+} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js";
 // Application State
 const state = {
     camera: false,
