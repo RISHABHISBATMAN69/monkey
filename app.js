@@ -238,7 +238,7 @@ function detectGestures() {
             canvasCtx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
             canvasCtx.save();
             
-            // Draw hand landmarks
+                      // Draw hand landmarks
             if (handResults.landmarks) {
                 for (const landmarks of handResults.landmarks) {
                     drawingUtils.drawConnectors(
@@ -253,13 +253,17 @@ function detectGestures() {
                 }
             }
 
-            // Draw face mesh (simplified)
+            // Draw face mesh (simplified) - ENHANCED VISIBILITY
             if (faceResults.faceLandmarks && faceResults.faceLandmarks.length > 0) {
                 const faceLandmarks = faceResults.faceLandmarks[0];
                 drawingUtils.drawConnectors(
                     faceLandmarks,
                     FaceLandmarker.FACE_LANDMARKS_TESSELATION,
-                    { color: 'rgba(200, 200, 200, 0.15)', lineWidth: 0.5 }
+                    { color: 'rgba(0, 255, 150, 0.8)', lineWidth: 2.5 }
+                );
+                drawingUtils.drawLandmarks(
+                    faceLandmarks,
+                    { color: 'rgba(0, 255, 200, 1)', radius: 3 }
                 );
             }
 
