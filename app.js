@@ -1,10 +1,10 @@
-// NEW: Import directly from the CDN
 import {
     FaceLandmarker,
     HandLandmarker,
     FilesetResolver,
     DrawingUtils
-} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js";
+} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/vision_bundle.mjs";
+
 // Application State
 const state = {
     camera: false,
@@ -13,10 +13,10 @@ const state = {
     handLandmarker: null,
     webcamRunning: false,
     lastDetectionTime: 0,
-    cooldownPeriod: 2000, // 2 seconds cooldown
+    cooldownPeriod: 2000, 
     currentMeme: null,
     animationFrame: null,
-    lastVideoTime: -1
+    lastVideoTime: -1 // Track frames to prevent crashing
 };
 
 // DOM Elements
@@ -34,19 +34,17 @@ const elements = {
     testButtons: document.querySelectorAll('.btn.test')
 };
 
-// Canvas Context
-let canvasCtx = null;
-let drawingUtils = null;
+let canvasCtx = elements.canvas.getContext('2d');
+let drawingUtils = new DrawingUtils(canvasCtx);
 
-// Initialize MediaPipe
 async function initializeMediaPipe() {
     try {
         updateStatus('Loading AI models...');
         
         const vision = await FilesetResolver.forVisionTasks(
-            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
         );
-
+// ... the rest of your Face/Hand Landmarker creation code ...
         // Initialize Face Landmarker
         state.faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
             baseOptions: {
