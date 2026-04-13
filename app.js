@@ -65,6 +65,9 @@ async function initializeMediaPipe() {
             },
             runningMode: 'VIDEO',
             numHands: 2
+           
+        updateStatus('AI Ready');
+        elements.toggleCamera.disabled = false; // Enable the button only when ready
         });
 
         updateStatus('Ready to start');
@@ -165,6 +168,17 @@ function toggleTracking() {
 
 // Main Detection Loop
 function detectGestures() {
+    function detectGestures() {
+    if (!state.webcamRunning) return;
+
+    // SAFETY CHECK: If models aren't ready, skip this frame instead of crashing
+    if (!state.handLandmarker || !state.faceLandmarker) {
+        state.animationFrame = requestAnimationFrame(detectGestures);
+        return;
+    }
+
+    if (elements.webcam.currentTime !== state.lastVideoTime) {
+     
     // Inside detectGestures()
 const handResults = state.handLandmarker.detectForVideo(elements.webcam, nowInMs);
 
