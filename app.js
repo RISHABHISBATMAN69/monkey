@@ -263,7 +263,7 @@ function detectGestures() {
                 );
                 drawingUtils.drawLandmarks(
                     faceLandmarks,
-                    { color: 'rgba(218, 112, 214, 1)', radius: 2 }
+                    { color: 'rgba(218, 112, 214, 0.7)', radius: 1 }
                 );
             }
 
