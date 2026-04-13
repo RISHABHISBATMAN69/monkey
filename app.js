@@ -341,7 +341,7 @@ function checkGestureCombinations(handResults, faceResults, currentTime) {
         triggeredMeme = './thinking monkey.webp';
     }
     // 3. Hands on chest + Gasping
-    else if (handGesture === 'chest_hands' && faceExpression === 'gasping') {
+    else if (handGesture === 'none' && faceExpression === 'gasping') {
         triggeredMeme = './image_745226.png';
     }
     // 4. Double middle fingers + Stoic
@@ -399,10 +399,7 @@ function detectHandGesture(results) {
         const hand1 = hands[0];
         const hand2 = hands[1];
 
-        // Both hands on chest
-        if (isHandOnChest(hand1) && isHandOnChest(hand2)) {
-            return 'chest_hands';
-        }
+        
 
         // Double middle fingers
         if (isFingerExtended(hand1, 12) && isFingerExtended(hand2, 12) &&
