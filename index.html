@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gesture Meme Detector</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Video Feed -->
+        <div class="video-container">
+            <video id="webcam" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <!-- Meme Overlay -->
+        <div id="memeOverlay" class="meme-overlay hidden">
+            <img id="memeImage" src="" alt="Meme">
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="status">
+                <span id="statusText">Camera Off</span>
+            </div>
+            
+            <div class="controls">
+                <button id="toggleCamera" class="btn primary">Start Camera</button>
+                <button id="toggleTracking" class="btn secondary" disabled>Show Tracking</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="test-controls">
+                <p class="label">Manual Test</p>
+                <button class="btn test" data-meme="./point up.webp">👆 Point Up</button>
+                <button class="btn test" data-meme="./thinking monkey.webp">🤔 Thinking</button>
+                <button class="btn test" data-meme="./image_745226.png">😱 Gasping</button>
+                <button class="btn test" data-meme="./image_745264.png">🖕 Double Bird</button>
+                <button class="btn test" data-meme="./image_745cee.png">😉 Wink Point</button>
+            </div>
+        </div>
+
+        <!-- Detection Info (for debugging) -->
+        <div class="debug-info" id="debugInfo">
+            <p>Hand: <span id="handStatus">-</span></p>
+            <p>Face: <span id="faceStatus">-</span></p>
+        </div>
+    </div>
+
+    <!-- MediaPipe CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
