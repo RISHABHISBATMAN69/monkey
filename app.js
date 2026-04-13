@@ -244,11 +244,11 @@ function detectGestures() {
                     drawingUtils.drawConnectors(
                         landmarks,
                         HandLandmarker.HAND_CONNECTIONS,
-                        { color: 'rgba(255, 255, 255, 0.3)', lineWidth: 1 }
+                        { color: 'rgba(0, 0, 0, 0.3)', lineWidth: 1 }
                     );
                     drawingUtils.drawLandmarks(
                         landmarks,
-                        { color: 'rgba(255, 255, 255, 0.6)', lineWidth: 1, radius: 2 }
+                        { color: 'rgba(0, 0, 0, 1)', lineWidth: 1, radius: 2 }
                     );
                 }
             }
@@ -259,11 +259,11 @@ function detectGestures() {
                 drawingUtils.drawConnectors(
                     faceLandmarks,
                     FaceLandmarker.FACE_LANDMARKS_TESSELATION,
-                    { color: 'rgba(0, 255, 150, 0.8)', lineWidth: 2.5 }
+                    { color: 'rgba(221, 160, 221, 0.6)', lineWidth: 1 }
                 );
                 drawingUtils.drawLandmarks(
                     faceLandmarks,
-                    { color: 'rgba(0, 255, 200, 1)', radius: 3 }
+                    { color: 'rgba(218, 112, 214, 1)', radius: 2 }
                 );
             }
 
