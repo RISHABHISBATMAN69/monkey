@@ -11,7 +11,8 @@ const state = {
     lastDetectionTime: 0,
     cooldownPeriod: 2000, // 2 seconds cooldown
     currentMeme: null,
-    animationFrame: null
+    animationFrame: null,
+    lastVideoTime: -1
 };
 
 // DOM Elements
@@ -97,6 +98,7 @@ async function startCamera() {
         
         await new Promise((resolve) => {
             elements.webcam.onloadedmetadata = () => {
+                elements.webcam.play();
                 resolve();
             };
         });
@@ -162,49 +164,52 @@ function toggleTracking() {
 function detectGestures() {
     if (!state.webcamRunning) return;
 
-    const nowInMs = Date.now();
-    
-    // Detect hands
-    const handResults = state.handLandmarker.detectForVideo(elements.webcam, nowInMs);
-    
-    // Detect face
-    const faceResults = state.faceLandmarker.detectForVideo(elements.webcam, nowInMs);
-
-    // Clear canvas if tracking is enabled
-    if (state.tracking && canvasCtx) {
-        canvasCtx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
-        canvasCtx.save();
+    // FIX: Only run the AI if the webcam has actually generated a new frame
+    if (elements.webcam.currentTime !== state.lastVideoTime) {
+        state.lastVideoTime = elements.webcam.currentTime;
         
-        // Draw hand landmarks
-        if (handResults.landmarks) {
-            for (const landmarks of handResults.landmarks) {
+        // FIX: Use performance.now() to prevent MediaPipe from crashing
+        const nowInMs = performance.now(); 
+        
+        // Detect hands & face
+        const handResults = state.handLandmarker.detectForVideo(elements.webcam, nowInMs);
+        const faceResults = state.faceLandmarker.detectForVideo(elements.webcam, nowInMs);
+
+        // Clear canvas if tracking is enabled
+        if (state.tracking && canvasCtx) {
+            canvasCtx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+            canvasCtx.save();
+            
+            // Draw hand landmarks
+            if (handResults.landmarks) {
+                for (const landmarks of handResults.landmarks) {
+                    drawingUtils.drawConnectors(
+                        landmarks,
+                        HandLandmarker.HAND_CONNECTIONS,
+                        { color: 'rgba(255, 255, 255, 0.3)', lineWidth: 1 }
+                    );
+                    drawingUtils.drawLandmarks(
+                        landmarks,
+                        { color: 'rgba(255, 255, 255, 0.6)', lineWidth: 1, radius: 2 }
+                    );
+                }
+            }
+
+            // Draw face mesh (simplified)
+            if (faceResults.faceLandmarks && faceResults.faceLandmarks.length > 0) {
+                const faceLandmarks = faceResults.faceLandmarks[0];
                 drawingUtils.drawConnectors(
-                    landmarks,
-                    HandLandmarker.HAND_CONNECTIONS,
-                    { color: 'rgba(255, 255, 255, 0.3)', lineWidth: 1 }
-                );
-                drawingUtils.drawLandmarks(
-                    landmarks,
-                    { color: 'rgba(255, 255, 255, 0.6)', lineWidth: 1, radius: 2 }
+                    faceLandmarks,
+                    FaceLandmarker.FACE_LANDMARKS_TESSELATION,
+                    { color: 'rgba(200, 200, 200, 0.15)', lineWidth: 0.5 }
                 );
             }
+            canvasCtx.restore();
         }
 
-        // Draw face mesh (simplified)
-        if (faceResults.faceLandmarks && faceResults.faceLandmarks.length > 0) {
-            const faceLandmarks = faceResults.faceLandmarks[0];
-            drawingUtils.drawConnectors(
-                faceLandmarks,
-                FaceLandmarker.FACE_LANDMARKS_TESSELATION,
-                { color: 'rgba(200, 200, 200, 0.15)', lineWidth: 0.5 }
-            );
-        }
-
-        canvasCtx.restore();
+        // Gesture Recognition
+        checkGestureCombinations(handResults, faceResults, Date.now());
     }
-
-    // Gesture Recognition
-    checkGestureCombinations(handResults, faceResults, nowInMs);
 
     // Continue loop
     state.animationFrame = requestAnimationFrame(detectGestures);
