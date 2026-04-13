@@ -19,8 +19,14 @@
             <img id="memeImage" src="" alt="Meme">
         </div>
 
-        <!-- Control Panel -->
-        <div class="control-panel">
+        <!-- Settings Button -->
+        <button class="settings-btn" id="settingsBtn">⚙️</button>
+
+        <!-- Drawer Overlay (background click to close) -->
+        <div class="drawer-overlay hidden" id="drawerOverlay"></div>
+
+        <!-- Control Panel Drawer -->
+        <div class="control-panel" id="controlPanel">
             <div class="status">
                 <span id="statusText">Camera Off</span>
             </div>
@@ -49,7 +55,12 @@
         </div>
     </div>
 
+    <!-- Background Music -->
+    <audio id="bgMusic" loop muted>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- MediaPipe CDN -->
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
