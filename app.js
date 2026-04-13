@@ -11,7 +11,9 @@ const state = {
     lastDetectionTime: 0,
     cooldownPeriod: 2000, // 2 seconds cooldown
     currentMeme: null,
-    animationFrame: null
+    animationFrame: null,
+    drawerOpen: false,
+    audioStarted: false
 };
 
 // DOM Elements
@@ -26,7 +28,11 @@ const elements = {
     debugInfo: document.getElementById('debugInfo'),
     handStatus: document.getElementById('handStatus'),
     faceStatus: document.getElementById('faceStatus'),
-    testButtons: document.querySelectorAll('.btn.test')
+    testButtons: document.querySelectorAll('.btn.test'),
+    settingsBtn: document.getElementById('settingsBtn'),
+    controlPanel: document.getElementById('controlPanel'),
+    drawerOverlay: document.getElementById('drawerOverlay'),
+    bgMusic: document.getElementById('bgMusic')
 };
 
 // Canvas Context
@@ -91,8 +97,31 @@ async function initializeMediaPipe() {
     }
 }
 
+// Toggle Drawer Menu
+function toggleDrawer() {
+    state.drawerOpen = !state.drawerOpen;
+    
+    if (state.drawerOpen) {
+        elements.controlPanel.classList.add('open');
+        elements.drawerOverlay.classList.remove('hidden');
+    } else {
+        elements.controlPanel.classList.remove('open');
+        elements.drawerOverlay.classList.add('hidden');
+    }
+}
+
+// Enable Background Audio (required after first user interaction)
+function enableAudio() {
+    if (!state.audioStarted && elements.bgMusic) {
+        state.audioStarted = true;
+        elements.bgMusic.muted = false;
+        elements.bgMusic.play().catch(err => console.log('Audio autoplay failed (expected):', err));
+    }
+}
+
 // Camera Control
 async function toggleCamera() {
+    enableAudio();
     if (!state.camera) {
         await startCamera();
     } else {
@@ -238,7 +267,7 @@ function detectGestures() {
             canvasCtx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
             canvasCtx.save();
             
-                      // Draw hand landmarks
+            // Draw hand landmarks
             if (handResults.landmarks) {
                 for (const landmarks of handResults.landmarks) {
                     drawingUtils.drawConnectors(
@@ -518,16 +547,31 @@ if (elements.memeOverlay) {
     elements.memeOverlay.addEventListener('click', hideMeme);
 }
 
+// Settings button
+if (elements.settingsBtn) {
+    elements.settingsBtn.addEventListener('click', toggleDrawer);
+}
+
+// Drawer overlay - close when clicked
+if (elements.drawerOverlay) {
+    elements.drawerOverlay.addEventListener('click', toggleDrawer);
+}
+
 // Test buttons
 if (elements.testButtons && elements.testButtons.length > 0) {
     elements.testButtons.forEach(button => {
         button.addEventListener('click', () => {
+            enableAudio();
             const memePath = button.getAttribute('data-meme');
             showMeme(memePath);
             state.lastDetectionTime = Date.now(); // Reset cooldown
         });
     });
 }
+
+// Enable audio on any user interaction
+document.addEventListener('click', enableAudio, { once: true });
+document.addEventListener('touchstart', enableAudio, { once: true });
 
 // Initialize on load
 window.addEventListener('load', async () => {
